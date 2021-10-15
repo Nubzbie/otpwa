@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+  </head>
+  <body>
+    <div class="container-fluid">
+        <div class="row mt-3 ml-3">
+            <div class="col col-md-12" id="scan">
+                <div class="card">
+                    <p class="card-header text-center text-capitalize"> Scan Barcode Dibawah Ini. </p>
+                    <div class="card-body">
+                        <canvas id="canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col col-md-12" id="sw">
+                <div class="card">
+                    <p class="card-header text-center text-capitalize"> Status. </p>
+                    <div class="card-body">
+                        <h5 id="status"> </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <!--<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>-->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <script src="javascripts/qrcode.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            eruda.init()
+            var emit = io()
+
+            $('#status').text('STATUS: WAITING SCANNING ...')
+
+            var isLogin_ = false
+
+            var DB = window.localStorage
+            if (!DB.getItem('session:data')) DB.setItem('session:data', JSON.stringify({}))
+            if (!DB.getItem('session:qr')) DB.setItem('session:qr', '')
+
+            emit.on('scan:qr', ({ qr }) => {
+                    QRCode.toCanvas(document.getElementById('canvas'), qr.toString(), function(error) {
+                        if (error) console.log(error)
+                        DB.setItem('session:qr', String(qr))
+                    })                    
+            })
+
+            emit.on('scan:success', ({ data }) => {
+                $('#scan').hide()
+                $('#sw').show()
+
+                $('#status').text('STATUS: CONNECTED!')
+                DB.setItem('session:data', data)
+            })
+
+            /*emit.on('is:connecting', ({ open }) => {
+                if (!open)
+                    $('#status').text('STATUS: CONNECTING ...')
+            })*/
+
+            emit.on('is:open',  ({ open }) => {
+                if (open) $('#scan').hide()
+                else $('#status').text('STATUS: CONNECTING ...')
+
+            })
+            /*emit.on('state:is', ({ state }) => {
+                if (state === 'open')
+                    console.log(state)
+                    $('#scan').hide()
+            })*/
+
+            /*if (DB.getItem('session:data')) {
+                emit.emit('auth:session', { auth: DB.getItem('session:data') })
+            }*/
+
+            //if (isLogin_) $('#scan').hide()
+
+            /*$('#send').on('click', function() {
+                let msg = $('#waMsg').val()
+                let to = $('#waTo').val()
+
+                console.log(`jid: ${to} | msg: ${msg}`)
+                emit.emit('send:msg', { msg: msg, jid: to })
+            })*/
+        })
+    </script>
+  </body>
+</html>
